@@ -66,11 +66,12 @@ L.Path = L.Class.extend({
 		return this;
 	},
 
-	_redraw: function () {
+	redraw: function () {
 		if (this._map) {
 			this.projectLatlngs();
 			this._updatePath();
 		}
+		return this;
 	}
 });
 
