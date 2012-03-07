@@ -4,14 +4,15 @@ L.Browser.svg = !!(document.createElementNS && document.createElementNS(L.Path.S
 
 L.Path = L.Path.extend({
 	statics: {
-		SVG: L.Browser.svg,
-		_createElement: function (name) {
-			return document.createElementNS(L.Path.SVG_NS, name);
-		}
+		SVG: L.Browser.svg
 	},
 
 	getPathString: function () {
 		// form path string here
+	},
+
+	_createElement: function (name) {
+		return document.createElementNS(L.Path.SVG_NS, name);
 	},
 
 	_initElements: function () {
@@ -21,9 +22,9 @@ L.Path = L.Path.extend({
 	},
 
 	_initPath: function () {
-		this._container = L.Path._createElement('g');
+		this._container = this._createElement('g');
 
-		this._path = L.Path._createElement('path');
+		this._path = this._createElement('path');
 		this._container.appendChild(this._path);
 
 		this._map._pathRoot.appendChild(this._container);
@@ -36,8 +37,6 @@ L.Path = L.Path.extend({
 		}
 		if (this.options.fill) {
 			this._path.setAttribute('fill-rule', 'evenodd');
-		} else {
-			this._path.setAttribute('fill', 'none');
 		}
 		this._updateStyle();
 	},
@@ -47,10 +46,14 @@ L.Path = L.Path.extend({
 			this._path.setAttribute('stroke', this.options.color);
 			this._path.setAttribute('stroke-opacity', this.options.opacity);
 			this._path.setAttribute('stroke-width', this.options.weight);
+		} else {
+			this._path.setAttribute('stroke', 'none');
 		}
 		if (this.options.fill) {
 			this._path.setAttribute('fill', this.options.fillColor || this.options.color);
 			this._path.setAttribute('fill-opacity', this.options.fillOpacity);
+		} else {
+			this._path.setAttribute('fill', 'none');
 		}
 	},
 
@@ -95,10 +98,18 @@ L.Path = L.Path.extend({
 		if (!this.hasEventListeners(e.type)) {
 			return;
 		}
+		var map = this._map,
+			containerPoint = map.mouseEventToContainerPoint(e),
+			layerPoint = map.containerPointToLayerPoint(containerPoint),
+			latlng = map.layerPointToLatLng(layerPoint);
+
 		this.fire(e.type, {
-			latlng: this._map.mouseEventToLatLng(e),
-			layerPoint: this._map.mouseEventToLayerPoint(e)
+			latlng: latlng,
+			layerPoint: layerPoint,
+			containerPoint: containerPoint,
+			originalEvent: e
 		});
+
 		L.DomEvent.stopPropagation(e);
 	}
 });
@@ -106,7 +117,7 @@ L.Path = L.Path.extend({
 L.Map.include({
 	_initPathRoot: function () {
 		if (!this._pathRoot) {
-			this._pathRoot = L.Path._createElement('svg');
+			this._pathRoot = L.Path.prototype._createElement('svg');
 			this._panes.overlayPane.appendChild(this._pathRoot);
 
 			this.on('moveend', this._updateSvgViewport);
