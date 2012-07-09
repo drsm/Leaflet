@@ -1,4 +1,3 @@
-
 L.GeoJSON = L.FeatureGroup.extend({
 	initialize: function (geojson, options) {
 		L.Util.setOptions(this, options);
@@ -31,7 +30,8 @@ L.GeoJSON = L.FeatureGroup.extend({
 			properties: geojson.properties,
 			geometryType: geometry.type,
 			bbox: geojson.bbox,
-			id: geojson.id
+			id: geojson.id,
+			geometry: geojson.geometry
 		});
 
 		this.addLayer(layer);
@@ -107,3 +107,7 @@ L.Util.extend(L.GeoJSON, {
 		return latlngs;
 	}
 });
+
+L.geoJson = function (geojson, options) {
+	return new L.GeoJson(geojson, options);
+};

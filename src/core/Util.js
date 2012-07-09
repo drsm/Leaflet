@@ -71,23 +71,28 @@ L.Util = {
 	}()),
 
 	limitExecByInterval: function (fn, time, context) {
-		var lock, execOnUnlock, args;
-		function exec() {
-			lock = false;
-			if (execOnUnlock) {
-				args.callee.apply(context, args);
-				execOnUnlock = false;
-			}
-		}
-		return function () {
-			args = arguments;
-			if (!lock) {
-				lock = true;
-				setTimeout(exec, time);
-				fn.apply(context, args);
-			} else {
+		var lock, execOnUnlock;
+		
+		return function wrapperFn() {
+			var args = arguments;
+
+			if (lock) {
 				execOnUnlock = true;
+				return;
 			}
+
+			lock = true;
+			
+			setTimeout(function () {
+				lock = false;
+				
+				if (execOnUnlock) {
+					wrapperFn.apply(context, args);
+					execOnUnlock = false;
+				}
+			}, time);
+
+			fn.apply(context, args);
 		};
 	},
 
@@ -98,6 +103,10 @@ L.Util = {
 	formatNum: function (num, digits) {
 		var pow = Math.pow(10, digits || 5);
 		return Math.round(num * pow) / pow;
+	},
+
+	splitWords: function (str) {
+		return str.replace(/^\s+|\s+$/g, '').split(/\s+/);
 	},
 
 	setOptions: function (obj, options) {
