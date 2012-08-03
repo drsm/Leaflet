@@ -8,12 +8,17 @@ L.Path = L.Class.extend({
 	statics: {
 		// how much to extend the clip area around the map view
 		// (relative to its size, e.g. 0.5 is half the screen in each direction)
-		CLIP_PADDING: 0.5
+		// set in such way that SVG element doesn't exceed 1280px (vector layers flicker on dragend if it is)
+		CLIP_PADDING: L.Browser.mobile ?
+			Math.max(0, Math.min(0.5,
+				(1280 / Math.max(window.innerWidth, window.innerHeight) - 1) / 2))
+			: 0.5
 	},
 
 	options: {
 		stroke: true,
 		color: '#0033ff',
+		dashArray: null,
 		weight: 5,
 		opacity: 0.5,
 
@@ -31,10 +36,17 @@ L.Path = L.Class.extend({
 	onAdd: function (map) {
 		this._map = map;
 
-		this._initElements();
-		this._initEvents();
+		if (!this._container) {
+			this._initElements();
+			this._initEvents();
+		}
+
 		this.projectLatlngs();
 		this._updatePath();
+
+		if (this._container) {
+			this._map._pathRoot.appendChild(this._container);
+		}
 
 		map.on({
 			'viewreset': this.projectLatlngs,
@@ -48,9 +60,15 @@ L.Path = L.Class.extend({
 	},
 
 	onRemove: function (map) {
+		map._pathRoot.removeChild(this._container);
+
 		this._map = null;
 
-		map._pathRoot.removeChild(this._container);
+		if (L.Browser.vml) {
+			this._container = null;
+			this._stroke = null;
+			this._fill = null;
+		}
 
 		map.off({
 			'viewreset': this.projectLatlngs,

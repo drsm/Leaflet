@@ -12,7 +12,7 @@ L.Popup = L.Class.extend({
 		maxHeight: null,
 		autoPan: true,
 		closeButton: true,
-		offset: new L.Point(0, 2),
+		offset: new L.Point(0, 6),
 		autoPanPadding: new L.Point(5, 5),
 		className: ''
 	},
@@ -31,7 +31,11 @@ L.Popup = L.Class.extend({
 		}
 		this._updateContent();
 
-		this._container.style.opacity = '0';
+		var animFade = map.options.fadeAnimation;
+
+		if (animFade) {
+			L.DomUtil.setOpacity(this._container, 0);
+		}
 		map._panes.popupPane.appendChild(this._container);
 
 		map.on('viewreset', this._updatePosition, this);
@@ -46,11 +50,18 @@ L.Popup = L.Class.extend({
 
 		this._update();
 
-		this._container.style.opacity = '1'; //TODO fix ugly opacity hack
+		if (animFade) {
+			L.DomUtil.setOpacity(this._container, 1);
+		}
 	},
 
 	addTo: function (map) {
 		map.addLayer(this);
+		return this;
+	},
+
+	openOn: function (map) {
+		map.openPopup(this);
 		return this;
 	},
 
@@ -65,7 +76,9 @@ L.Popup = L.Class.extend({
 			zoomanim: this._zoomAnimation
 		}, this);
 
-		this._container.style.opacity = '0';
+		if (map.options.fadeAnimation) {
+			L.DomUtil.setOpacity(this._container, 0);
+		}
 
 		this._map = null;
 	},
@@ -102,6 +115,7 @@ L.Popup = L.Class.extend({
 		if (this.options.closeButton) {
 			closeButton = this._closeButton = L.DomUtil.create('a', prefix + '-close-button', container);
 			closeButton.href = '#close';
+			closeButton.innerHTML = '&#215;';
 
 			L.DomEvent.on(closeButton, 'click', this._onCloseButtonClick, this);
 		}
@@ -192,7 +206,7 @@ L.Popup = L.Class.extend({
 	},
 
 	_zoomAnimation: function (opt) {
-		var pos = this._map._latLngToNewLayerPoint(this._latlng, opt.zoom, opt.center)._round();
+		var pos = this._map._latLngToNewLayerPoint(this._latlng, opt.zoom, opt.center);
 
 		L.DomUtil.setPosition(this._container, pos);
 	},

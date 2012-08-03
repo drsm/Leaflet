@@ -30,15 +30,6 @@ L.Marker = L.Class.extend({
 
 		if (map.options.zoomAnimation && map.options.markerZoomAnimation) {
 			map.on('zoomanim', this._animateZoom, this);
-			L.DomUtil.addClass(this._icon, 'leaflet-zoom-animated');
-			if (this._shadow) {
-				L.DomUtil.addClass(this._shadow, 'leaflet-zoom-animated');
-			}
-		} else {
-			L.DomUtil.addClass(this._icon, 'leaflet-zoom-hide');
-			if (this._shadow) {
-				L.DomUtil.addClass(this._shadow, 'leaflet-zoom-hide');
-			}
 		}
 	},
 
@@ -103,7 +94,11 @@ L.Marker = L.Class.extend({
 	},
 
 	_initIcon: function () {
-		var options = this.options;
+		var options = this.options,
+		    map = this._map,
+		    animation = (map.options.zoomAnimation && map.options.markerZoomAnimation),
+		    classToAdd = animation ? 'leaflet-zoom-animated' : 'leaflet-zoom-hide',
+		    needOpacityUpdate = false;
 
 		if (!this._icon) {
 			this._icon = options.icon.createIcon();
@@ -113,10 +108,21 @@ L.Marker = L.Class.extend({
 			}
 
 			this._initInteraction();
-			this._updateOpacity();
+			needOpacityUpdate = (this.options.opacity < 1);
+
+			L.DomUtil.addClass(this._icon, classToAdd);
 		}
 		if (!this._shadow) {
 			this._shadow = options.icon.createShadow();
+
+			if (this._shadow) {
+				L.DomUtil.addClass(this._shadow, classToAdd);
+				needOpacityUpdate = (this.options.opacity < 1);
+			}
+		}
+
+		if (needOpacityUpdate) {
+			this._updateOpacity();
 		}
 
 		var panes = this._map._panes;
@@ -205,8 +211,11 @@ L.Marker = L.Class.extend({
 		}
 	},
 
-	_updateOpacity: function (opacity) {
+	_updateOpacity: function () {
 		L.DomUtil.setOpacity(this._icon, this.options.opacity);
+		if (this._shadow) {
+			L.DomUtil.setOpacity(this._shadow, this.options.opacity);
+		}
 	}
 });
 

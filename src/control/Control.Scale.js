@@ -14,12 +14,7 @@ L.Control.Scale = L.Control.extend({
 		    container = L.DomUtil.create('div', className),
 		    options = this.options;
 
-		if (options.metric) {
-			this._mScale = L.DomUtil.create('div', className + '-line', container);
-		}
-		if (options.imperial) {
-			this._iScale = L.DomUtil.create('div', className + '-line', container);
-		}
+		this._addScales(options, className, container);
 
 		map.on(options.updateWhenIdle ? 'moveend' : 'move', this._update, this);
 		this._update();
@@ -31,21 +26,33 @@ L.Control.Scale = L.Control.extend({
 		map.off(this.options.updateWhenIdle ? 'moveend' : 'move', this._update, this);
 	},
 
+	_addScales: function (options, className, container) {
+		if (options.metric) {
+			this._mScale = L.DomUtil.create('div', className + '-line', container);
+		}
+		if (options.imperial) {
+			this._iScale = L.DomUtil.create('div', className + '-line', container);
+		}
+	},
+
 	_update: function () {
 		var bounds = this._map.getBounds(),
 		    centerLat = bounds.getCenter().lat,
-
-		    left = new L.LatLng(centerLat, bounds.getSouthWest().lng),
-		    right = new L.LatLng(centerLat, bounds.getNorthEast().lng),
+		    halfWorldMeters = 6378137 * Math.PI * Math.cos(centerLat * Math.PI / 180),
+		    dist = halfWorldMeters * (bounds.getNorthEast().lng - bounds.getSouthWest().lng) / 180,
 
 		    size = this._map.getSize(),
 		    options = this.options,
-                    maxMeters = 0;
+		    maxMeters = 0;
 
 		if (size.x > 0) {
-			maxMeters = left.distanceTo(right) * (options.maxWidth / size.x);
+			maxMeters = dist * (options.maxWidth / size.x);
 		}
 
+		this._updateScales(options, maxMeters);
+	},
+
+	_updateScales: function (options, maxMeters) {
 		if (options.metric && maxMeters) {
 			this._updateMetric(maxMeters);
 		}
@@ -90,8 +97,12 @@ L.Control.Scale = L.Control.extend({
 		var pow10 = Math.pow(10, (Math.floor(num) + '').length - 1),
 		    d = num / pow10;
 
-		d = d >= 10 ? 10 : d >= 5 ? 5 : d >= 2 ? 2 : 1;
+		d = d >= 10 ? 10 : d >= 5 ? 5 : d >= 3 ? 3 : d >= 2 ? 2 : 1;
 
 		return pow10 * d;
 	}
 });
+
+L.control.scale = function (options) {
+	return new L.Control.Scale(options);
+};

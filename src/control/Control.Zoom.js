@@ -21,7 +21,8 @@ L.Control.Zoom = L.Control.extend({
 		L.DomEvent
 			.on(link, 'click', L.DomEvent.stopPropagation)
 			.on(link, 'click', L.DomEvent.preventDefault)
-			.on(link, 'click', fn, context);
+			.on(link, 'click', fn, context)
+			.on(link, 'dblclick', L.DomEvent.stopPropagation);
 
 		return link;
 	}
@@ -37,3 +38,7 @@ L.Map.addInitHook(function () {
 		this.addControl(this.zoomControl);
 	}
 });
+
+L.control.zoom = function (options) {
+	return new L.Control.Zoom(options);
+};
